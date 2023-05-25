@@ -4,6 +4,9 @@ const API_URL = "http://localhost:8090";
 async function login() {
 
     var myForm = document.getElementById("formLogin");
+    if (myForm.name === "" || myForm.password === "") {
+        myForm.classList.add("was-validated");
+    }
     var formData = new FormData(myForm);
     var jsonData = {};
     for (var [k, v] of formData) {//convertimos los datos a json
@@ -23,17 +26,18 @@ async function login() {
         console.log(respuesta.token)
         localStorage.token = respuesta.token;
         
-        location.href = 'index.html';
+        location.href = 'dashboard.html';
     } else if (request.status === 400) {
         const respuesta = await request.json();
+        for (response of respuesta) {
+            toastr.error(`${response}`);
+        }
+        
         console.log(respuesta)
     }
     else if (request.status === 401) {
         const respuesta = await request.json();
-        console.log(respuesta)
+        toastr.error(`${respuesta.error}`);
+        console.log(respuesta.error)
     }
-}
-
-function getToken() {
-    console.log(localStorage.token);
 }
