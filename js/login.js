@@ -26,7 +26,7 @@ async function login() {
         console.log(respuesta.token)
         localStorage.token = respuesta.token;
         
-        location.href = 'dashboard.html';
+        location.href = 'templates/dashboard.html';
     } else if (request.status === 400) {
         const respuesta = await request.json();
         for (response of respuesta) {
