@@ -4,12 +4,13 @@ const jsonToken = decodeJwt(localStorage.token);
 async function loadPage() {
     setInterval(validateToken(), 0);
     const title = document.querySelector("title").getInnerHTML();
-    sidebarPage();
+    loadSidebarPage();
     
     if (jsonToken.role === "PATIENT") {
         return
     }
-    notificationNav();
+
+    loadNavbarPage();
     const username_logged = document.getElementById("profile_user");
     username_logged.innerHTML = await profileUser();
 
@@ -21,17 +22,20 @@ async function loadPage() {
 
 }
 
+// Metodo para cargar los pacientes
 async function loadPatientPage() {
     const patient_section = document.getElementById("patient_section");
     patient_section.innerHTML = await patientSection();
 }
 
+// Metodo para cargar el perfil del usuario logueado
 async function loadProfilePage() {
     const profile_section = document.getElementById("profile_section");
     profile_section.innerHTML = await profileSection();
 }
 
-async function sidebarPage() {
+// Metodo para cargar el sidebar
+async function loadSidebarPage() {
     const sidebar = document.getElementById("sidebar");
     sidebar.innerHTML = `
     <ul class="sidebar-nav" id="sidebar-nav">
@@ -45,14 +49,14 @@ async function sidebarPage() {
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="tables-data.html">
-          <i class="bi bi-person"></i>
+          <i class="bi bi-people"></i>
           <span>Pacientes</span>
         </a>
       </li><!-- End paciente Nav -->
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="pages-agenda.html">
-          <i class="bi bi-calendar2-minus"></i>
+          <i class="bi bi-calendar3"></i>
           <span>Agenda</span>
         </a>
       </li><!-- End agenda Nav -->
@@ -66,7 +70,7 @@ async function sidebarPage() {
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="pages-reportes.html">
-          <i class="bi bi-file-earmark"></i>
+          <i class="bi bi-clipboard-data"></i>
           <span>Reportes</span>
         </a>
       </li><!-- End reportes Page Nav -->
@@ -82,7 +86,8 @@ async function sidebarPage() {
     `;
 }
 
-async function notificationNav() {
+// Metodo para cargar el navbar
+async function loadNavbarPage() {
     const nav = document.getElementById("navbar");
     nav.innerHTML = `
     <ul class="d-flex align-items-center">
@@ -242,6 +247,7 @@ async function notificationNav() {
     `;
 }
 
+// Metodo para cargar el perfil del usuario
 async function profileUser() {
 
     const respuesta = await getUserById();
@@ -298,6 +304,7 @@ async function profileUser() {
 
 }
 
+// Metodo para cargar la seccion del perfil
 async function profileSection() {
 
     const respuesta = await getUserById();
@@ -451,6 +458,7 @@ async function profileSection() {
     `;
 }
 
+// Metodo para cargar la seccion de los pactientes
 async function patientSection() {
 
     const response = await getAllPeopleByRole();
@@ -469,12 +477,18 @@ async function patientSection() {
     
     const formatter = new Intl.DateTimeFormat('es-CO', options);
     let patients = `
+    
     <div class="row">
         <div class="col-lg-12">
 
           <div class="card">
+            <div class="card-header">
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPatient"><i class="bi bi-person-plus"></i> Crear paciente</button>
+                </div>
+            </div>
             <div class="card-body">
-              <h5 class="card-title">Pacientes</h5>
+              <h5 class="card-title">Lista de pacientes</h5>
 
               <!-- Table with stripped rows -->
               <table class="table datatable">
@@ -521,6 +535,8 @@ async function patientSection() {
     return patients;
 }
 
+
+// Metodo que hace fetch al endpoint de obtener un usuario por id
 async function getUserById() {
     let settings =  {
         method: 'GET',
@@ -549,6 +565,7 @@ async function getUserById() {
     }
 }
 
+// Metodo que hace fetch al endpoint de obtener todos los pacientes del doctor
 async function getAllPeopleByRole() {
     let settings =  {
         method: 'GET',
@@ -575,6 +592,48 @@ async function getAllPeopleByRole() {
         console.log(respuesta.error);
         window.location.href = "pages-error-404.html";
     }
+}
+
+async function createPerson() {
+    var myForm = document.getElementById("createPerson");
+    if (myForm.name === "") {
+        myForm.classList.add("was-validated");
+    }
+    var formData = new FormData(myForm);
+    var jsonData = {};
+    for (var [k, v] of formData) {//convertimos los datos a json
+        jsonData[k] = v;
+    }
+    let settings =  {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${localStorage.token}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(jsonData)
+    };
+    const request = await fetch(`${API_URL}/people/`, settings);
+    if (request.ok && request.status === 200) {
+        return await request.json();
+
+    } else if (request.status === 400) {
+        const respuesta = await request.json();
+        for (response of respuesta) {
+            toastr.error(`${response}`);
+        }
+        console.log(respuesta)
+    }
+    else if (request.status === 401) {
+        const respuesta = await request.json();
+        toastr.error(`${respuesta.error}`);
+        console.log(respuesta.error);
+    }
+}
+
+function restoreValidate() {
+    document.getElementById("createPerson").classList.remove("was-validated");
+    
 }
 
 function salir() {
