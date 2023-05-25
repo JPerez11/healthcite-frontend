@@ -3,13 +3,243 @@ const jsonToken = decodeJwt(localStorage.token);
 
 async function loadPage() {
     setInterval(validateToken(), 0);
+    const title = document.querySelector("title").getInnerHTML();
+    sidebarPage();
     
+    if (jsonToken.role === "PATIENT") {
+        return
+    }
+    notificationNav();
     const username_logged = document.getElementById("profile_user");
-    const profile_section = document.getElementById("profile_section");
-
     username_logged.innerHTML = await profileUser();
-    profile_section.innerHTML = await profileSection();
 
+    if (title === "Profile - Healthcite") {
+        loadProfilePage();
+    } else if (title === "Patient - Healthcite" && jsonToken.role === "DOCTOR") {
+        loadPatientPage();
+    }
+
+}
+
+async function loadPatientPage() {
+    const patient_section = document.getElementById("patient_section");
+    patient_section.innerHTML = await patientSection();
+}
+
+async function loadProfilePage() {
+    const profile_section = document.getElementById("profile_section");
+    profile_section.innerHTML = await profileSection();
+}
+
+async function sidebarPage() {
+    const sidebar = document.getElementById("sidebar");
+    sidebar.innerHTML = `
+    <ul class="sidebar-nav" id="sidebar-nav">
+
+      <li class="nav-item">
+        <a class="nav-link " href="dashboard.html">
+          <i class="bi bi-grid"></i>
+          <span>Dashboard</span>
+        </a>
+      </li><!-- End Dashboard Nav -->
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="tables-data.html">
+          <i class="bi bi-person"></i>
+          <span>Pacientes</span>
+        </a>
+      </li><!-- End paciente Nav -->
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="pages-agenda.html">
+          <i class="bi bi-calendar2-minus"></i>
+          <span>Agenda</span>
+        </a>
+      </li><!-- End agenda Nav -->
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="pages-callcenter.html">
+          <i class="bi bi-pc-display-horizontal"></i>
+          <span>Call center</span>
+        </a>
+      </li><!-- End call center Nav -->
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="pages-reportes.html">
+          <i class="bi bi-file-earmark"></i>
+          <span>Reportes</span>
+        </a>
+      </li><!-- End reportes Page Nav -->
+
+      <li class="nav-item">
+        <a class="nav-link collapsed position-absolute bottom-0 start-0" href="users-profile.html">
+          <i class="bi bi-gear"></i>
+          <span>Configuración</span>
+        </a>
+      </li><!-- End Configuracion Page Nav -->
+
+    </ul>
+    `;
+}
+
+async function notificationNav() {
+    const nav = document.getElementById("navbar");
+    nav.innerHTML = `
+    <ul class="d-flex align-items-center">
+
+    <li class="nav-item d-block d-lg-none">
+      <a class="nav-link nav-icon search-bar-toggle " href="#">
+        <i class="bi bi-search"></i>
+      </a>
+    </li><!-- End Search Icon-->
+
+    <li class="nav-item dropdown">
+
+      <a class="nav-link nav-icon" href="#" data-bs-toggle="dropdown">
+        <i class="bi bi-bell"></i>
+        <span class="badge bg-primary badge-number">4</span>
+      </a><!-- End Notification Icon -->
+
+      <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
+        <li class="dropdown-header">
+          You have 4 new notifications
+          <a href="#"><span class="badge rounded-pill bg-primary p-2 ms-2">View all</span></a>
+        </li>
+        <li>
+          <hr class="dropdown-divider">
+        </li>
+
+        <li class="notification-item">
+          <i class="bi bi-exclamation-circle text-warning"></i>
+          <div>
+            <h4>Lorem Ipsum</h4>
+            <p>Quae dolorem earum veritatis oditseno</p>
+            <p>30 min. ago</p>
+          </div>
+        </li>
+
+        <li>
+          <hr class="dropdown-divider">
+        </li>
+
+        <li class="notification-item">
+          <i class="bi bi-x-circle text-danger"></i>
+          <div>
+            <h4>Atque rerum nesciunt</h4>
+            <p>Quae dolorem earum veritatis oditseno</p>
+            <p>1 hr. ago</p>
+          </div>
+        </li>
+
+        <li>
+          <hr class="dropdown-divider">
+        </li>
+
+        <li class="notification-item">
+          <i class="bi bi-check-circle text-success"></i>
+          <div>
+            <h4>Sit rerum fuga</h4>
+            <p>Quae dolorem earum veritatis oditseno</p>
+            <p>2 hrs. ago</p>
+          </div>
+        </li>
+
+        <li>
+          <hr class="dropdown-divider">
+        </li>
+
+        <li class="notification-item">
+          <i class="bi bi-info-circle text-primary"></i>
+          <div>
+            <h4>Dicta reprehenderit</h4>
+            <p>Quae dolorem earum veritatis oditseno</p>
+            <p>4 hrs. ago</p>
+          </div>
+        </li>
+
+        <li>
+          <hr class="dropdown-divider">
+        </li>
+        <li class="dropdown-footer">
+          <a href="#">Show all notifications</a>
+        </li>
+
+      </ul><!-- End Notification Dropdown Items -->
+
+    </li><!-- End Notification Nav -->
+
+    <li class="nav-item dropdown">
+
+      <a class="nav-link nav-icon" href="#" data-bs-toggle="dropdown">
+        <i class="bi bi-chat-left-text"></i>
+        <span class="badge bg-success badge-number">3</span>
+      </a><!-- End Messages Icon -->
+
+      <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow messages">
+        <li class="dropdown-header">
+          You have 3 new messages
+          <a href="#"><span class="badge rounded-pill bg-primary p-2 ms-2">View all</span></a>
+        </li>
+        <li>
+          <hr class="dropdown-divider">
+        </li>
+
+        <li class="message-item">
+          <a href="#">
+            <img src="../assets/img/messages-1.jpg" alt="" class="rounded-circle">
+            <div>
+              <h4>Maria Hudson</h4>
+              <p>Velit asperiores et ducimus soluta repudiandae labore officia est ut...</p>
+              <p>4 hrs. ago</p>
+            </div>
+          </a>
+        </li>
+        <li>
+          <hr class="dropdown-divider">
+        </li>
+
+        <li class="message-item">
+          <a href="#">
+            <img src="../assets/img/messages-2.jpg" alt="" class="rounded-circle">
+            <div>
+              <h4>Anna Nelson</h4>
+              <p>Velit asperiores et ducimus soluta repudiandae labore officia est ut...</p>
+              <p>6 hrs. ago</p>
+            </div>
+          </a>
+        </li>
+        <li>
+          <hr class="dropdown-divider">
+        </li>
+
+        <li class="message-item">
+          <a href="#">
+            <img src="../assets/img/messages-3.jpg" alt="" class="rounded-circle">
+            <div>
+              <h4>David Muldon</h4>
+              <p>Velit asperiores et ducimus soluta repudiandae labore officia est ut...</p>
+              <p>8 hrs. ago</p>
+            </div>
+          </a>
+        </li>
+        <li>
+          <hr class="dropdown-divider">
+        </li>
+
+        <li class="dropdown-footer">
+          <a href="#">Show all messages</a>
+        </li>
+
+      </ul><!-- End Messages Dropdown Items -->
+
+    </li><!-- End Messages Nav -->
+
+    <li class="nav-item dropdown pe-3" id="profile_user">
+
+    </li><!-- End Profile Nav -->
+
+  </ul>
+    `;
 }
 
 async function profileUser() {
@@ -221,6 +451,76 @@ async function profileSection() {
     `;
 }
 
+async function patientSection() {
+
+    const response = await getAllPeopleByRole();
+    console.log(response)
+    let count = 0;
+    // Formatear las fechas de nacimiento en la zona horaria de Bogotá
+    const options = {
+        timeZone: 'America/Bogota',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    };
+    
+    const formatter = new Intl.DateTimeFormat('es-CO', options);
+    let patients = `
+    <div class="row">
+        <div class="col-lg-12">
+
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Pacientes</h5>
+
+              <!-- Table with stripped rows -->
+              <table class="table datatable">
+                <thead>
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Reason</th>
+                    <th scope="col">EPS</th>
+                    <th scope="col">Symptoms</th>
+                    <th scope="col">Citation Date</th>
+                    <th scope="col">Status</th>
+                  </tr>
+                </thead>
+                <tbody>`;
+
+        for (const data of response) {
+            let citationDate = new Date(data.citationDate);
+            let dateFormat = formatter.format(citationDate);
+            count++;
+            patients += `
+                
+                        <tr>
+                            <th scope="row">${count}</th>
+                            <td>${data.patientName.charAt(0).toUpperCase() + data.patientName.slice(1).toLowerCase()}</td>
+                            <td>${data.reason}</td>
+                            <td>${data.eps}</td>
+                            <td>${data.symptoms}</td>
+                            <td>${dateFormat}</td>
+                            <td>${data.active}</td>
+                        </tr>`;
+        }
+        patients += `
+                </tbody>
+            </table>
+            <!-- End Table with stripped rows -->
+
+        </div>
+        </div>
+
+    </div>
+    </div>`;
+    
+    return patients;
+}
+
 async function getUserById() {
     let settings =  {
         method: 'GET',
@@ -241,10 +541,39 @@ async function getUserById() {
         }
         console.log(respuesta)
     }
-    else if (request.status === 401) {
+    else if (request.status === 404) {
         const respuesta = await request.json();
         toastr.error(`${respuesta.error}`);
         console.log(respuesta.error)
+        window.location.href = "pages-error-404.html";
+    }
+}
+
+async function getAllPeopleByRole() {
+    let settings =  {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${localStorage.token}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    };
+    const request = await fetch(`${API_URL}/appointment/doctor/${jsonToken.id}`, settings);
+    if (request.ok && request.status === 200) {
+        return await request.json();
+
+    } else if (request.status === 400) {
+        const respuesta = await request.json();
+        for (response of respuesta) {
+            toastr.error(`${response}`);
+        }
+        console.log(respuesta)
+    }
+    else if (request.status === 404) {
+        const respuesta = await request.json();
+        toastr.error(`${respuesta.error}`);
+        console.log(respuesta.error);
+        window.location.href = "pages-error-404.html";
     }
 }
 

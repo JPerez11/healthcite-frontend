@@ -38,6 +38,6 @@ async function login() {
     else if (request.status === 401) {
         const respuesta = await request.json();
         toastr.error(`${respuesta.error}`);
-        console.log(respuesta.error)
+        console.log(respuesta.error);
     }
 }
