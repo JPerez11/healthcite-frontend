@@ -79,38 +79,38 @@
       <nav>
         <ol class="breadcrumb">
           <li class="breadcrumb-item"><a href="dashboard.html">Home</a></li>
-          <li class="breadcrumb-item active">Pacientes</li>
+          <li class="breadcrumb-item active" id="nav_li_page">Pacientes</li>
         </ol>
       </nav>
     </div><!-- End Page Title -->
 
-    <section class="section" id="patient_section" onload="loadPatientPage()">
+    <section class="section" id="person_section" onload="loadPatientPage()">
       
     </section>
 
   </main><!-- End #main -->
 
-  <div class="modal fade" id="createPatient" tabindex="-1" style="display: none;" aria-hidden="true">
+  <div class="modal fade" id="createPerson" tabindex="-1" style="display: none;" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Crear paciente</h5>
+          <h5 class="modal-title" id="modal_title">Crear paciente</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <!-- Start form patient -->
-          <form class="needs-validation" id="createPerson" novalidate>
+          <form class="needs-validation" id="formCreatePerson" novalidate>
             
             <div class="row mb-3">
               <label for="firstName" class="col-sm-2 col-form-label">First name</label>
               <div class="col-sm-10">
-                <input type="text" class="form-control" name="firstName" id="firstName" value="John" required>
+                <input type="text" class="form-control" name="firstName" id="firstName" required>
               </div>
             </div>
             <div class="row mb-3">
               <label for="lastName" class="col-sm-2 col-form-label">Last name</label>
               <div class="col-sm-10">
-                <input type="text" class="form-control" name="lastName" id="lastName" value="Doe" required>
+                <input type="text" class="form-control" name="lastName" id="lastName" required>
               </div>
             </div>
             <div class="row mb-3">
@@ -138,9 +138,14 @@
               </div>
             </div>
             <div class="row mb-3">
-              <label for="gender" class="col-sm-2 col-form-label">Gender</label>
+              <label for="gender" class="col-sm-2 col-form-label">Select</label>
               <div class="col-sm-10">
-                <input type="text" class="form-control" name="gender" id="gender" required>
+                <select class="form-select" name="gender" id="gender" aria-label="Default select example">
+                  <option selected="">Open this select menu</option>
+                  <option value="Male">Hombre</option>
+                  <option value="Female">Mujer</option>
+                  <option value="Non binary">No binario</option>
+                </select>
               </div>
             </div>
             <div class="row mb-3">
@@ -150,23 +155,12 @@
               </div>
             </div>
             <div class="row mb-3">
-              <label for="username" class="col-sm-2 col-form-label">Username</label>
-              <div class="col-sm-10">
-                <input type="text" class="form-control" name="username" id="username" required>
-              </div>
-            </div>
-            <div class="row mb-3">
               <label for="password" class="col-sm-2 col-form-label">Password</label>
               <div class="col-sm-10">
                 <input type="password" class="form-control" name="password" id="password" required>
               </div>
             </div>
-            <div class="row mb-3">
-              <label for="idRole" class="col-sm-2 col-form-label">Role</label>
-              <div class="col-sm-10">
-                <input type="text" class="form-control" name="idRole" id="idRole" required>
-              </div>
-            </div>
+                <input type="text" class="form-control" name="idRole" id="idRole" hidden>
           </form>
           <!-- End form patient -->
         </div>
