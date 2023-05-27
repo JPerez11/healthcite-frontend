@@ -1,5 +1,12 @@
 const API_URL = "http://localhost:8090";
 
+const formLogin = document.getElementById('formLogin');
+  formLogin.addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      login();
+    }
+  });
 
 async function login() {
 

@@ -45,6 +45,8 @@ async function loadPage() {
       span_sidebar_person.textContent = DOCTOR.patient;
       if (title.innerHTML === "Patient - Healthcite") {
         loadPersonPage(2);
+      } else if (title.innerHTML === "Agenda - Healthcite") {
+        loadAgendaPage();
       }
       
     } else if (jsonToken.role === "ADMIN") {
@@ -57,7 +59,10 @@ async function loadPage() {
         modal_title.textContent = "Crear doctor";
         nav_li_page.textContent = ADMIN.doctor;
         title.innerHTML = "Doctors - Healthcite";
-        loadPersonPage(1);
+        
+      }
+
+      if (title.innerHTML === "Agenda - Healthcite") {
       }
 
     }
@@ -68,7 +73,7 @@ async function loadPage() {
 async function loadPersonPage(id) {
     const person_section = document.getElementById("person_section");
     if (id === 2) {
-      person_section.innerHTML = await pacientSection();
+      person_section.innerHTML = await patientSection();
     } else if (id === 1) {
       person_section.innerHTML = await doctorSection();
     }
@@ -103,7 +108,7 @@ async function loadSidebarPage() {
       <li class="nav-item" id="li_sidebar_agenda">
         <a class="nav-link collapsed" href="pages-agenda.html">
           <i class="bi bi-calendar3"></i>
-          <span>Agenda</span>
+          <span>Citas</span>
         </a>
       </li><!-- End agenda Nav -->
 
@@ -296,10 +301,10 @@ async function loadNavbarPage() {
 // Metodo para cargar el perfil del usuario
 async function profileUser() {
 
-    const respuesta = await getUserById();
+    const response = await getUserById();
 
-    let firstName = respuesta.firstName.charAt(0).toUpperCase() + respuesta.firstName.slice(1);
-    let lastName = respuesta.lastName.charAt(0).toUpperCase() + respuesta.lastName.slice(1);
+    let firstName = response.firstName.charAt(0).toUpperCase() + response.firstName.slice(1);
+    let lastName = response.lastName.charAt(0).toUpperCase() + response.lastName.slice(1);
     let role = jsonToken.role.charAt(0).toUpperCase() + jsonToken.role.slice(1).toLowerCase();
     return `
         <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
@@ -350,12 +355,18 @@ async function profileUser() {
 
 }
 
+// Metodo para cargar el perfil del usuario logueado
+async function loadAgendaPage() {
+  const profile_section = document.getElementById("agenda_section");
+  profile_section.innerHTML = await appointmentSection();
+}
+
 // Metodo para cargar la seccion del perfil
 async function profileSection() {
 
-    const respuesta = await getUserById();
-    let firstName = respuesta.firstName.charAt(0).toUpperCase() + respuesta.firstName.slice(1);
-    let lastName = respuesta.lastName.charAt(0).toUpperCase() + respuesta.lastName.slice(1);
+    const response = await getUserById();
+    let firstName = response.firstName.charAt(0).toUpperCase() + response.firstName.slice(1);
+    let lastName = response.lastName.charAt(0).toUpperCase() + response.lastName.slice(1);
     let role = jsonToken.role.charAt(0).toUpperCase() + jsonToken.role.slice(1).toLowerCase();
 
     return `
@@ -425,27 +436,27 @@ async function profileSection() {
 
                   <div class="row">
                     <div class="col-lg-3 col-md-4 label">Address</div>
-                    <div class="col-lg-9 col-md-8">${respuesta.address}</div>
+                    <div class="col-lg-9 col-md-8">${response.address}</div>
                   </div>
 
                   <div class="row">
                     <div class="col-lg-3 col-md-4 label">Phone</div>
-                    <div class="col-lg-9 col-md-8">${respuesta.phone}</div>
+                    <div class="col-lg-9 col-md-8">${response.phone}</div>
                   </div>
 
                   <div class="row">
                     <div class="col-lg-3 col-md-4 label">Email</div>
-                    <div class="col-lg-9 col-md-8">${respuesta.email}</div>
+                    <div class="col-lg-9 col-md-8">${response.email}</div>
                   </div>
 
                   <div class="row">
                     <div class="col-lg-3 col-md-4 label">Birthdate</div>
-                    <div class="col-lg-9 col-md-8">${respuesta.birthdate}</div>
+                    <div class="col-lg-9 col-md-8">${response.birthdate}</div>
                   </div>
 
                   <div class="row">
                     <div class="col-lg-3 col-md-4 label">Gender</div>
-                    <div class="col-lg-9 col-md-8">${respuesta.gender}</div>
+                    <div class="col-lg-9 col-md-8">${response.gender}</div>
                   </div>
 
                 </div>
@@ -503,10 +514,9 @@ async function profileSection() {
 }
 
 // Metodo para cargar la seccion de pacientes
-async function pacientSection() {
+async function appointmentSection() {
 
-    const response = await getAllPeopleByRole();
-    console.log(response)
+    const response = await getAllAppointmentByRole();
     let count = 0;
     // Formatear las fechas de nacimiento en la zona horaria de Bogotá
     const options = {
@@ -520,6 +530,143 @@ async function pacientSection() {
     };
     
     const formatter = new Intl.DateTimeFormat('es-CO', options);
+    let appointments = `
+    
+    <div class="row">
+        <div class="col-lg-12">
+
+          <div class="card">
+            <div class="card-header">
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="button" class="btn btn-primary" onclick="showModal()"><i class="bi bi-person-plus"></i> Crear cita</button>
+                </div>
+            </div>
+            <div class="card-body">
+              <h5 class="card-title">Lista de citas</h5>
+
+              <!-- Table with stripped rows -->
+              <table class="table datatable">
+                <thead>
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Document</th>
+                    <th scope="col">Phone</th>
+                    <th scope="col">Reason</th>
+                    <th scope="col">EPS</th>
+                    <th scope="col">Symptoms</th>
+                    <th scope="col">Citation Date</th>
+                    <th scope="col">Status</th>
+                  </tr>
+                </thead>
+                <tbody>`;
+
+                if (response !== undefined) {
+                  
+                  for (const data of response) {
+                      let citationDate = new Date(data.citationDate);
+                      let dateFormat = formatter.format(citationDate);
+                      count++;
+                      appointments += `
+                          
+                                  <tr>
+                                      <th scope="row">${count}</th>
+                                      <td>${data.patientName.charAt(0).toUpperCase() + data.patientName.slice(1).toLowerCase()}</td>
+                                      <td>${data.patientDocument}</td>
+                                      <td>${data.patientPhone}</td>
+                                      <td>${data.reason}</td>
+                                      <td>${data.eps}</td>
+                                      <td>${data.symptoms}</td>
+                                      <td>${dateFormat}</td>
+                                      <td>${data.active}</td>
+                                  </tr>`;
+                  }
+                }
+    appointments += `
+                </tbody>
+            </table>
+            <!-- End Table with stripped rows -->
+
+        </div>
+        </div>
+
+    </div>
+    </div>`;
+    
+    return appointments;
+}
+
+// Metodo para cargar la seccion de doctores
+async function doctorSection() {
+
+    const response = await getAllDoctorsByRole();
+    console.log(response)
+    let count = 0;
+    let doctors = `
+    
+    <div class="row">
+      <div class="col-lg-12">
+
+        <div class="card">
+          <div class="card-header">
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPerson"><i class="bi bi-person-plus"></i> Crear doctor</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <h5 class="card-title">Lista de doctores</h5>
+
+            <!-- Table with stripped rows -->
+            <table class="table datatable">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Document</th>
+                  <th scope="col">Phone</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">address</th>
+                  <th scope="col">Birthdate</th>
+                </tr>
+              </thead>
+              <tbody>`;
+
+            if (response !== undefined) {
+              for (const data of response) {
+                  count++;
+                  doctors += `
+                        
+                  <tr>
+                      <th scope="row">${count}</th>
+                      <td>${data.firstName.charAt(0).toUpperCase() + data.firstName.slice(1).toLowerCase()} ${data.lastName.charAt(0).toUpperCase() + data.lastName.slice(1).toLowerCase()}</td>
+                      <td>${data.document}</td>
+                      <td>${data.phone}</td>
+                      <td>${data.email}</td>
+                      <td>${data.address}</td>
+                      <td>${data.birthdate}</td>
+                  </tr>`;
+              }
+            }
+        doctors += `
+              </tbody>
+            </table>
+            <!-- End Table with stripped rows -->
+
+          </div>
+        </div>
+
+      </div>
+    </div>`;
+    
+    return doctors;
+}
+
+// Metodo para cargar la seccion de doctores
+async function patientSection() {
+
+    const response = await getAllPatientsByRole();
+    console.log(response)
+    let count = 0;
     let patients = `
     
     <div class="row">
@@ -540,31 +687,28 @@ async function pacientSection() {
                   <tr>
                     <th scope="col">#</th>
                     <th scope="col">Name</th>
-                    <th scope="col">Reason</th>
-                    <th scope="col">EPS</th>
-                    <th scope="col">Symptoms</th>
-                    <th scope="col">Citation Date</th>
-                    <th scope="col">Status</th>
+                    <th scope="col">Document</th>
+                    <th scope="col">Phone</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">address</th>
+                    <th scope="col">Birthdate</th>
                   </tr>
                 </thead>
                 <tbody>`;
 
                 if (response !== undefined) {
-                  
                   for (const data of response) {
-                      let citationDate = new Date(data.citationDate);
-                      let dateFormat = formatter.format(citationDate);
                       count++;
                       patients += `
                           
                                   <tr>
                                       <th scope="row">${count}</th>
-                                      <td>${data.patientName.charAt(0).toUpperCase() + data.patientName.slice(1).toLowerCase()}</td>
-                                      <td>${data.reason}</td>
-                                      <td>${data.eps}</td>
-                                      <td>${data.symptoms}</td>
-                                      <td>${dateFormat}</td>
-                                      <td>${data.active}</td>
+                                      <td>${data.firstName.charAt(0).toUpperCase() + data.firstName.slice(1).toLowerCase()} ${data.lastName.charAt(0).toUpperCase() + data.lastName.slice(1).toLowerCase()}</td>
+                                      <td>${data.document}</td>
+                                      <td>${data.phone}</td>
+                                      <td>${data.email}</td>
+                                      <td>${data.address}</td>
+                                      <td>${data.birthdate}</td>
                                   </tr>`;
                   }
                 }
@@ -582,69 +726,83 @@ async function pacientSection() {
     return patients;
 }
 
-// Metodo para cargar la seccion de doctores
-async function doctorSection() {
+// Metodo para cargar el formulario en la modal
+async function formModalAppointment() {
 
-    const response = await getAllDoctorsByRole();
-    console.log(response)
-    let count = 0;
-    let doctors = `
-    
-    <div class="row">
-        <div class="col-lg-12">
+  const patientResponse = await getAllPatientsByRole();
+  const epsResponse = await getAllEps();
 
-          <div class="card">
-            <div class="card-header">
-                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPerson"><i class="bi bi-person-plus"></i> Crear doctor</button>
-                </div>
-            </div>
-            <div class="card-body">
-              <h5 class="card-title">Lista de doctores</h5>
-
-              <!-- Table with stripped rows -->
-              <table class="table datatable">
-                <thead>
-                  <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">Name</th>
-                    <th scope="col">Document</th>
-                    <th scope="col">Phone</th>
-                    <th scope="col">Email</th>
-                    <th scope="col">address</th>
-                    <th scope="col">Birthdate</th>
-                  </tr>
-                </thead>
-                <tbody>`;
-
-                if (response !== undefined) {
-                  for (const data of response) {
-                      count++;
-                      doctors += `
-                          
-                                  <tr>
-                                      <th scope="row">${count}</th>
-                                      <td>${data.firstName.charAt(0).toUpperCase() + data.firstName.slice(1).toLowerCase()} ${data.lastName.charAt(0).toUpperCase() + data.lastName.slice(1).toLowerCase()}</td>
-                                      <td>${data.document}</td>
-                                      <td>${data.phone}</td>
-                                      <td>${data.email}</td>
-                                      <td>${data.address}</td>
-                                      <td>${data.birthdate}</td>
-                                  </tr>`;
-                  }
-                }
-        doctors += `
-                </tbody>
-            </table>
-            <!-- End Table with stripped rows -->
-
+  if (epsResponse === undefined || epsResponse === null) {
+    $('#my_modal').modal('hide');
+  }
+  let form = `
+      <form class="needs-validation" id="formCreateAppointment" novalidate>
+        
+      <div class="row mb-3">
+        <label for="citationDate" class="col-sm-2 col-form-label">Citation date</label>
+        <div class="col-sm-10">
+          <input type="datetime-local" class="form-control" name="citationDate" id="citationDate" required>
         </div>
+      </div>
+        <div class="row mb-3">
+          <label for="description" class="col-sm-2 col-form-label">Description</label>
+          <div class="col-sm-10">
+            <input type="text" class="form-control" name="description" id="description" required>
+          </div>
         </div>
-
-    </div>
-    </div>`;
-    
-    return doctors;
+        <div class="row mb-3">
+          <label for="patientDocument" class="col-sm-2 col-form-label">Patient</label>
+          <div class="col-sm-10">
+            <input type="patientDocument" class="form-control" name="patientDocument" list="patientList" id="patientDocument" required>
+          </div>
+        </div>
+        <datalist id="patientList">
+        `;
+        if (patientResponse !== undefined) {
+          for (const patient of patientResponse) {
+            form += `
+            <option value="${patient.document}">${patient.firstName.charAt(0).toUpperCase() + patient.firstName.slice(1).toLowerCase()} ${patient.lastName.charAt(0).toUpperCase() + patient.lastName.slice(1).toLowerCase()}</option>
+            `;
+          }
+        }
+      form += `
+      </datalist>
+      <div class="row mb-3">
+          <label for="epsName" class="col-sm-2 col-form-label">EPS</label>
+          <div class="col-sm-10">
+            <input type="epsName" class="form-control" name="epsName" list="epsList" id="epsName" required>
+          </div>
+        </div>
+        <datalist id="epsList">
+        `;
+        if (epsResponse !== undefined) {
+          for (const eps of epsResponse) {
+            form += `
+            <option value="${eps.name}"></option>
+            `;
+          }
+        }
+      form += `
+      </datalist>
+      <div class="row mb-3">
+        <label for="symptoms" class="col-sm-2 col-form-label">Symptoms</label>
+        <div class="col-sm-10">
+          <textarea class="form-control" name="symptoms" id="symptoms" style="height: 92px; resize: none;" required></textarea>
+        </div>
+      </div>
+      <div class="row mb-3">
+        <label for="reason" class="col-sm-2 col-form-label">Reason</label>
+        <div class="col-sm-10">
+          <textarea class="form-control" name="reason" id="reason" style="height: 92px; resize: none;" required></textarea>
+        </div>
+      </div>
+      <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+        <button type="reset" class="btn btn-outline-secondary">Close</button>
+        <button type="button" class="btn btn-success" onclick="createAppointment()">Save</button>
+      </div>
+      </form>
+  `;
+  return form;
 }
 
 // Metodo que hace fetch al endpoint de obtener un usuario por id
@@ -677,7 +835,7 @@ async function getUserById() {
 }
 
 // Metodo que hace fetch al endpoint de obtener todos los pacientes que tienen cita con el doctor
-async function getAllPeopleByRole() {
+async function getAllAppointmentByRole() {
     let settings =  {
         method: 'GET',
         headers: {
@@ -704,6 +862,7 @@ async function getAllPeopleByRole() {
     }
 }
 
+// Metodo para obtener todos los doctores
 async function getAllDoctorsByRole() {
   let settings =  {
     method: 'GET',
@@ -731,6 +890,63 @@ async function getAllDoctorsByRole() {
   }
 }
 
+// Metodo para obtener todos los pacientes
+async function getAllPatientsByRole() {
+  let settings =  {
+    method: 'GET',
+    headers: {
+        'Authorization': `Bearer ${localStorage.token}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+    }
+  };
+  const request = await fetch(`${API_URL}/people/doctor/PATIENT`, settings);
+  if (request.ok && request.status === 200) {
+      return await request.json();
+
+  } else if (request.status === 400) {
+      const respuesta = await request.json();
+      for (response of respuesta) {
+          toastr.error(`${response}`);
+      }
+      console.log(respuesta)
+  }
+  else if (request.status === 404) {
+      const respuesta = await request.json();
+      toastr.error(`${respuesta.error}`);
+      console.log(respuesta.error);
+  }
+}
+
+// Metodo para obtener todas las EPS
+async function getAllEps() {
+  let settings =  {
+    method: 'GET',
+    headers: {
+        'Authorization': `Bearer ${localStorage.token}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+    }
+  };
+  const request = await fetch(`${API_URL}/eps/`, settings);
+  if (request.ok && request.status === 200) {
+      return await request.json();
+
+  } else if (request.status === 400) {
+      const respuesta = await request.json();
+      for (response of respuesta) {
+          toastr.error(`${response}`);
+      }
+      console.log(respuesta)
+  }
+  else if (request.status === 404) {
+      const respuesta = await request.json();
+      toastr.error(`${respuesta.error}`);
+      console.log(respuesta.error);
+  }
+}
+
+// Metodo para crear una persona
 async function createPerson() {
   let idRole;
   let idUser;
@@ -783,6 +999,59 @@ async function createPerson() {
   }
 }
 
+// Metodo para crear una una cita
+async function createAppointment() {
+  
+  const user = await getUserById(jsonToken.id);
+
+  var myForm = document.getElementById("formCreateAppointment");
+  var formData = new FormData(myForm);
+  formData.forEach( data => {
+    if (data === "") {
+      myForm.classList.add("was-validated");
+    }
+  });
+  var jsonData = {};
+  for (var [k, v] of formData) {//convertimos los datos a json
+      jsonData[k] = v;
+  }
+  jsonData.attentionDate = currentDate();
+  jsonData.doctorDocument = user.document;
+  let settings =  {
+      method: 'POST',
+      headers: {
+          'Authorization': `Bearer ${localStorage.token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(jsonData)
+  };
+  const request = await fetch(`${API_URL}/appointment/`, settings);
+  if (request.ok && request.status === 201) {
+    toastr.success('Registro Guardado');
+    loadAgendaPage();
+    return await request.json();
+
+  } else if (request.status === 400) {
+      const respuesta = await request.json();
+      for (response of respuesta) {
+          toastr.error(`${response}`);
+      }
+      console.log(respuesta)
+  }
+  else if (request.status === 401) {
+      const respuesta = await request.json();
+      toastr.error(`${respuesta.error}`);
+      console.log(respuesta.error);
+  }
+}
+
+// Metodo para mostrar la modal
+async function showModal() {
+  $('#my_modal').modal('show');
+  document.querySelector('#modal_content').innerHTML = await formModalAppointment();
+}
+
 function restoreValidate() {
     document.getElementById("formCreatePerson").classList.remove("was-validated");
     
@@ -818,4 +1087,17 @@ function decodeJwt(token) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
     }).join(''));
     return JSON.parse(jsonPayload);
+}
+
+function currentDate() {
+    // Obtener la fecha y hora actual
+    const currentDate = new Date();
+    // Obtener los componentes de la fecha y hora actual
+    const year = currentDate.getFullYear();
+    const month = (currentDate.getMonth() + 1).toString().padStart(2, '0'); // El mes es base 0, por lo que se suma 1
+    const day = currentDate.getDate().toString().padStart(2, '0');
+    const hours = currentDate.getHours().toString().padStart(2, '0');
+    const minutes = currentDate.getMinutes().toString().padStart(2, '0');
+    // Crear una cadena de fecha y hora en el formato adecuado (YYYY-MM-DDTHH:MM)
+    return formattedDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
 }
