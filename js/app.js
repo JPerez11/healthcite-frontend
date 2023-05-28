@@ -14,81 +14,86 @@ const ROLE = {
   DOCTOR: 2,
   PATIENT: 3
 }
+const APPOINTMENT = {
+  pending: "PENDING",
+  attending: "ATTENDING",
+  attended: "ATTENDED"
+}
 
 async function loadPage() {
-    setInterval(validateToken(), 0);
-    loadSidebarPage();
-    loadNavbarPage();
-    //Constants
-    const title = document.querySelector("title");
-    const pagetitle = document.querySelector(".pagetitle h1");
-    const username_logged = document.getElementById("profile_user");
-    const li_sidebar_person = document.getElementById("li_sidebar_person");
-    const li_sidebar_agenda = document.getElementById("li_sidebar_agenda");
-    const li_sidebar_callcenter = document.getElementById("li_sidebar_callcenter");
-    const li_sidebar_reports = document.getElementById("li_sidebar_reports");
-    const span_sidebar_person = document.getElementById("span_sidebar_person");
-    const modal_title = document.getElementById("modal_title");
-    const nav_li_page = document.getElementById("nav_li_page");
-    
-    username_logged.innerHTML = await profileUser();
-    if (title.innerHTML === "Profile - Healthcite") {
-      loadProfilePage();
+  setInterval(validateToken(), 0);
+  loadSidebarPage();
+  loadNavbarPage();
+  //Constants
+  const title = document.querySelector("title");
+  const pagetitle = document.querySelector(".pagetitle h1");
+  const username_logged = document.getElementById("profile_user");
+  const li_sidebar_person = document.getElementById("li_sidebar_person");
+  const li_sidebar_agenda = document.getElementById("li_sidebar_agenda");
+  const li_sidebar_callcenter = document.getElementById("li_sidebar_callcenter");
+  const li_sidebar_eps = document.getElementById("li_sidebar_eps");
+  const span_sidebar_person = document.getElementById("span_sidebar_person");
+  const modal_title = document.getElementById("modal_title");
+  const nav_li_page = document.getElementById("nav_li_page");
+
+  username_logged.innerHTML = await profileUser();
+  if (title.innerHTML === "Profile - Healthcite") {
+    loadProfilePage();
+  }
+
+  if (jsonToken.role === "PATIENT") {
+    deleteElement(li_sidebar_person);
+    deleteElement(li_sidebar_agenda);
+    deleteElement(li_sidebar_eps);
+    return
+  } else if (jsonToken.role === "DOCTOR") {
+    deleteElement(li_sidebar_eps);
+    span_sidebar_person.textContent = DOCTOR.patient;
+    if (title.innerHTML === "Patient - Healthcite") {
+      loadPersonPage(2);
+    } else if (title.innerHTML === "Agenda - Healthcite") {
+      loadAgendaPage();
     }
 
-    if (jsonToken.role === "PATIENT") {
-      deleteElement(li_sidebar_person);
-      deleteElement(li_sidebar_agenda);
-      deleteElement(li_sidebar_reports);
-      return
-    } else if (jsonToken.role === "DOCTOR") {
-      span_sidebar_person.textContent = DOCTOR.patient;
-      if (title.innerHTML === "Patient - Healthcite") {
-        loadPersonPage(2);
-      } else if (title.innerHTML === "Agenda - Healthcite") {
-        loadAgendaPage();
-      }
-      
-    } else if (jsonToken.role === "ADMIN") {
-      deleteElement(li_sidebar_agenda);
-      deleteElement(li_sidebar_callcenter);
-      span_sidebar_person.innerHTML = ADMIN.doctor;
-      
-      if (title.innerHTML === "Patient - Healthcite") {
-        pagetitle.textContent = ADMIN.doctor;
-        modal_title.textContent = "Crear doctor";
-        nav_li_page.textContent = ADMIN.doctor;
-        title.innerHTML = "Doctors - Healthcite";
-        
-      }
+  } else if (jsonToken.role === "ADMIN") {
+    deleteElement(li_sidebar_agenda);
+    deleteElement(li_sidebar_callcenter);
+    span_sidebar_person.innerHTML = ADMIN.doctor;
 
-      if (title.innerHTML === "Agenda - Healthcite") {
-      }
-
+    if (title.innerHTML === "Patient - Healthcite") {
+      pagetitle.textContent = ADMIN.doctor;
+      modal_title.textContent = "Crear doctor";
+      nav_li_page.textContent = ADMIN.doctor;
+      title.innerHTML = "Doctors - Healthcite";
+      loadPersonPage(1);
+    } else if (title.innerHTML === "EPS - Healthcite") {
+      loadEpsPage();
     }
+
+  }
 
 }
 
 // Metodo para cargar los registros de pacientes o doctores
 async function loadPersonPage(id) {
-    const person_section = document.getElementById("person_section");
-    if (id === 2) {
-      person_section.innerHTML = await patientSection();
-    } else if (id === 1) {
-      person_section.innerHTML = await doctorSection();
-    }
+  const person_section = document.getElementById("person_section");
+  if (id === 2) {
+    person_section.innerHTML = await patientSection();
+  } else if (id === 1) {
+    person_section.innerHTML = await doctorSection();
+  }
 }
 
 // Metodo para cargar el perfil del usuario logueado
 async function loadProfilePage() {
-    const profile_section = document.getElementById("profile_section");
-    profile_section.innerHTML = await profileSection();
+  const profile_section = document.getElementById("profile_section");
+  profile_section.innerHTML = await profileSection();
 }
 
 // Metodo para cargar el sidebar
 async function loadSidebarPage() {
-    const sidebar = document.getElementById("sidebar");
-    sidebar.innerHTML = `
+  const sidebar = document.getElementById("sidebar");
+  sidebar.innerHTML = `
     <ul class="sidebar-nav" id="sidebar-nav">
 
       <li class="nav-item">
@@ -119,10 +124,10 @@ async function loadSidebarPage() {
         </a>
       </li><!-- End call center Nav -->
 
-      <li class="nav-item" id="li_sidebar_reports">
-        <a class="nav-link collapsed" href="pages-reportes.html">
-          <i class="bi bi-clipboard-data"></i>
-          <span>Reportes</span>
+      <li class="nav-item" id="li_sidebar_eps">
+        <a class="nav-link collapsed" href="pages-eps.html">
+          <i class="bx bx-home-heart"></i>
+          <span>EPS</span>
         </a>
       </li><!-- End reportes Page Nav -->
 
@@ -139,8 +144,8 @@ async function loadSidebarPage() {
 
 // Metodo para cargar el navbar
 async function loadNavbarPage() {
-    const nav = document.getElementById("navbar");
-    nav.innerHTML = `
+  const nav = document.getElementById("navbar");
+  nav.innerHTML = `
     <ul class="d-flex align-items-center">
 
     <li class="nav-item d-block d-lg-none">
@@ -301,12 +306,12 @@ async function loadNavbarPage() {
 // Metodo para cargar el perfil del usuario
 async function profileUser() {
 
-    const response = await getUserById();
+  const response = await getUserById();
 
-    let firstName = response.firstName.charAt(0).toUpperCase() + response.firstName.slice(1);
-    let lastName = response.lastName.charAt(0).toUpperCase() + response.lastName.slice(1);
-    let role = jsonToken.role.charAt(0).toUpperCase() + jsonToken.role.slice(1).toLowerCase();
-    return `
+  let firstName = response.firstName.charAt(0).toUpperCase() + response.firstName.slice(1);
+  let lastName = response.lastName.charAt(0).toUpperCase() + response.lastName.slice(1);
+  let role = jsonToken.role.charAt(0).toUpperCase() + jsonToken.role.slice(1).toLowerCase();
+  return `
         <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
           <img src="../assets/img/profile-img.jpg" alt="Profile" class="rounded-circle">
           <span class="d-none d-md-block dropdown-toggle ps-2" id="username_logged">${firstName[0]}. ${lastName}</span>
@@ -357,19 +362,25 @@ async function profileUser() {
 
 // Metodo para cargar el perfil del usuario logueado
 async function loadAgendaPage() {
-  const profile_section = document.getElementById("agenda_section");
-  profile_section.innerHTML = await appointmentSection();
+  const agenda_section = document.getElementById("agenda_section");
+  agenda_section.innerHTML = await appointmentSection();
+}
+
+async function loadEpsPage() {
+  const epsSction = document.getElementById("eps_section");
+  epsSction.innerHTML = await epsSection();
 }
 
 // Metodo para cargar la seccion del perfil
 async function profileSection() {
 
-    const response = await getUserById();
-    let firstName = response.firstName.charAt(0).toUpperCase() + response.firstName.slice(1);
-    let lastName = response.lastName.charAt(0).toUpperCase() + response.lastName.slice(1);
-    let role = jsonToken.role.charAt(0).toUpperCase() + jsonToken.role.slice(1).toLowerCase();
+  const response = await getUserById();
+  let firstName = response.firstName.charAt(0).toUpperCase() + response.firstName.slice(1);
+  let lastName = response.lastName.charAt(0).toUpperCase() + response.lastName.slice(1);
+  let role = jsonToken.role.charAt(0).toUpperCase() + jsonToken.role.slice(1).toLowerCase();
+  let gender = response.gender.charAt(0).toUpperCase() + response.gender.slice(1).toLowerCase();
 
-    return `
+  return `
     <div class="row">
         <div class="col-xl-4">
 
@@ -456,7 +467,7 @@ async function profileSection() {
 
                   <div class="row">
                     <div class="col-lg-3 col-md-4 label">Gender</div>
-                    <div class="col-lg-9 col-md-8">${response.gender}</div>
+                    <div class="col-lg-9 col-md-8">${gender}</div>
                   </div>
 
                 </div>
@@ -516,21 +527,21 @@ async function profileSection() {
 // Metodo para cargar la seccion de pacientes
 async function appointmentSection() {
 
-    const response = await getAllAppointmentByRole();
-    let count = 0;
-    // Formatear las fechas de nacimiento en la zona horaria de Bogotá
-    const options = {
-        timeZone: 'America/Bogota',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    };
-    
-    const formatter = new Intl.DateTimeFormat('es-CO', options);
-    let appointments = `
+  const response = await getAllAppointmentByRole();
+  let count = 0;
+  // Formatear las fechas de nacimiento en la zona horaria de Bogotá
+  const options = {
+    timeZone: 'America/Bogota',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  };
+
+  const formatter = new Intl.DateTimeFormat('es-CO', options);
+  let appointments = `
     
     <div class="row">
         <div class="col-lg-12">
@@ -538,7 +549,7 @@ async function appointmentSection() {
           <div class="card">
             <div class="card-header">
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                    <button type="button" class="btn btn-primary" onclick="showModal()"><i class="bi bi-person-plus"></i> Crear cita</button>
+                    <button type="button" class="btn btn-primary" onclick="showModal()"><i class="bx bxs-calendar-plus"></i> Crear cita</button>
                 </div>
             </div>
             <div class="card-body">
@@ -557,17 +568,18 @@ async function appointmentSection() {
                     <th scope="col">Symptoms</th>
                     <th scope="col">Citation Date</th>
                     <th scope="col">Status</th>
+                    <th scope="col">Action</th>
                   </tr>
                 </thead>
                 <tbody>`;
 
-                if (response !== undefined) {
-                  
-                  for (const data of response) {
-                      let citationDate = new Date(data.citationDate);
-                      let dateFormat = formatter.format(citationDate);
-                      count++;
-                      appointments += `
+  if (response !== undefined) {
+
+    for (const data of response) {
+      let citationDate = new Date(data.citationDate);
+      let dateFormat = formatter.format(citationDate);
+      count++;
+      appointments += `
                           
                                   <tr>
                                       <th scope="row">${count}</th>
@@ -578,11 +590,16 @@ async function appointmentSection() {
                                       <td>${data.eps}</td>
                                       <td>${data.symptoms}</td>
                                       <td>${dateFormat}</td>
-                                      <td>${data.active}</td>
+                                      <td>${data.status}</td>
+                                      <td>
+                                        <div class="icon text-center">
+                                          <i class="bx bxs-calendar-check text-success fs-4" title="Change status" style="cursor: pointer" onclick="updateStatus(${data.id})"></i>
+                                        </div>
+                                      </td>
                                   </tr>`;
-                  }
-                }
-    appointments += `
+    }
+  }
+  appointments += `
                 </tbody>
             </table>
             <!-- End Table with stripped rows -->
@@ -592,17 +609,16 @@ async function appointmentSection() {
 
     </div>
     </div>`;
-    
-    return appointments;
+
+  return appointments;
 }
 
 // Metodo para cargar la seccion de doctores
 async function doctorSection() {
 
-    const response = await getAllDoctorsByRole();
-    console.log(response)
-    let count = 0;
-    let doctors = `
+  const response = await getAllDoctorsByRole();
+  let count = 0;
+  let doctors = `
     
     <div class="row">
       <div class="col-lg-12">
@@ -631,10 +647,10 @@ async function doctorSection() {
               </thead>
               <tbody>`;
 
-            if (response !== undefined) {
-              for (const data of response) {
-                  count++;
-                  doctors += `
+  if (response !== undefined) {
+    for (const data of response) {
+      count++;
+      doctors += `
                         
                   <tr>
                       <th scope="row">${count}</th>
@@ -645,9 +661,9 @@ async function doctorSection() {
                       <td>${data.address}</td>
                       <td>${data.birthdate}</td>
                   </tr>`;
-              }
-            }
-        doctors += `
+    }
+  }
+  doctors += `
               </tbody>
             </table>
             <!-- End Table with stripped rows -->
@@ -657,17 +673,16 @@ async function doctorSection() {
 
       </div>
     </div>`;
-    
-    return doctors;
+
+  return doctors;
 }
 
 // Metodo para cargar la seccion de doctores
 async function patientSection() {
 
-    const response = await getAllPatientsByRole();
-    console.log(response)
-    let count = 0;
-    let patients = `
+  const response = await getAllPatientsByRole();
+  let count = 0;
+  let patients = `
     
     <div class="row">
         <div class="col-lg-12">
@@ -696,10 +711,10 @@ async function patientSection() {
                 </thead>
                 <tbody>`;
 
-                if (response !== undefined) {
-                  for (const data of response) {
-                      count++;
-                      patients += `
+  if (response !== undefined) {
+    for (const data of response) {
+      count++;
+      patients += `
                           
                                   <tr>
                                       <th scope="row">${count}</th>
@@ -710,9 +725,9 @@ async function patientSection() {
                                       <td>${data.address}</td>
                                       <td>${data.birthdate}</td>
                                   </tr>`;
-                  }
-                }
-        patients += `
+    }
+  }
+  patients += `
                 </tbody>
             </table>
             <!-- End Table with stripped rows -->
@@ -722,8 +737,115 @@ async function patientSection() {
 
     </div>
     </div>`;
+
+  return patients;
+}
+
+// Metodo para cargar la seccion de eps
+async function epsSection() {
+
+  const response = await getAllEps();
+  console.log(response)
+  let count = 0;
+  let eps = `
     
-    return patients;
+    <div class="row">
+        <div class="col-lg-12">
+
+          <div class="card">
+            <div class="card-header">
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="button" class="btn btn-primary" onclick="showModalEps()"><i class="bi bi-person-plus"></i> Registrar EPS</button>
+                </div>
+            </div>
+            <div class="card-body">
+              <h5 class="card-title">Lista de pacientes</h5>
+
+              <!-- Table with stripped rows -->
+              <table class="table datatable">
+                <thead>
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">NIT</th>
+                    <th scope="col">Phone</th>
+                    <th scope="col">Foundation date</th>
+                    <th scope="col">address</th>
+                  </tr>
+                </thead>
+                <tbody>`;
+
+  if (response !== undefined) {
+    for (const data of response) {
+      count++;
+      eps += `
+                          
+                                  <tr>
+                                      <th scope="row">${count}</th>
+                                      <td>${data.name.charAt(0).toUpperCase() + data.name.slice(1).toLowerCase()}</td>
+                                      <td>${data.nit}</td>
+                                      <td>${data.phone}</td>
+                                      <td>${data.foundationDate}</td>
+                                      <td>${data.address}</td>
+                                  </tr>`;
+    }
+  }
+  eps += `
+                </tbody>
+            </table>
+            <!-- End Table with stripped rows -->
+
+        </div>
+        </div>
+
+    </div>
+    </div>`;
+
+  return eps;
+}
+
+// Metodo para cargar el formulario de eps en la modal
+async function formModalEps() {
+
+  return form = `
+      <form class="needs-validation" id="formCreateEps" novalidate>
+        
+        <div class="row mb-3">
+          <label for="name" class="col-sm-2 col-form-label">Name</label>
+          <div class="col-sm-10">
+            <input type="text" class="form-control" name="name" id="name" required>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <label for="nit" class="col-sm-2 col-form-label">Nit</label>
+          <div class="col-sm-10">
+            <input type="text" class="form-control" name="nit" id="nit" required>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <label for="phone" class="col-sm-2 col-form-label">Phone</label>
+          <div class="col-sm-10">
+            <input type="text" class="form-control" name="phone" id="phone" required>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <label for="address" class="col-sm-2 col-form-label">Address</label>
+          <div class="col-sm-10">
+            <input type="text" class="form-control" name="address" id="address" required>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <label for="foundationDate" class="col-sm-2 col-form-label">Foundation date</label>
+          <div class="col-sm-10">
+            <input type="date" class="form-control" name="foundationDate" id="foundationDate" required>
+          </div>
+        </div>
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+          <button type="reset" class="btn btn-outline-secondary">Reset</button>
+          <button type="button" class="btn btn-success" onclick="createEps()">Save</button>
+        </div>
+      </form>
+  `;
 }
 
 // Metodo para cargar el formulario en la modal
@@ -753,19 +875,19 @@ async function formModalAppointment() {
         <div class="row mb-3">
           <label for="patientDocument" class="col-sm-2 col-form-label">Patient</label>
           <div class="col-sm-10">
-            <input type="patientDocument" class="form-control" name="patientDocument" list="patientList" id="patientDocument" required>
+            <input type="text" class="form-control" name="patientDocument" list="patientList" id="patientDocument" required>
           </div>
         </div>
         <datalist id="patientList">
         `;
-        if (patientResponse !== undefined) {
-          for (const patient of patientResponse) {
-            form += `
+  if (patientResponse !== undefined) {
+    for (const patient of patientResponse) {
+      form += `
             <option value="${patient.document}">${patient.firstName.charAt(0).toUpperCase() + patient.firstName.slice(1).toLowerCase()} ${patient.lastName.charAt(0).toUpperCase() + patient.lastName.slice(1).toLowerCase()}</option>
             `;
-          }
-        }
-      form += `
+    }
+  }
+  form += `
       </datalist>
       <div class="row mb-3">
           <label for="epsName" class="col-sm-2 col-form-label">EPS</label>
@@ -775,14 +897,14 @@ async function formModalAppointment() {
         </div>
         <datalist id="epsList">
         `;
-        if (epsResponse !== undefined) {
-          for (const eps of epsResponse) {
-            form += `
+  if (epsResponse !== undefined) {
+    for (const eps of epsResponse) {
+      form += `
             <option value="${eps.name}"></option>
             `;
-          }
-        }
-      form += `
+    }
+  }
+  form += `
       </datalist>
       <div class="row mb-3">
         <label for="symptoms" class="col-sm-2 col-form-label">Symptoms</label>
@@ -797,7 +919,7 @@ async function formModalAppointment() {
         </div>
       </div>
       <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-        <button type="reset" class="btn btn-outline-secondary">Close</button>
+        <button type="reset" class="btn btn-outline-secondary">Reset</button>
         <button type="button" class="btn btn-success" onclick="createAppointment()">Save</button>
       </div>
       </form>
@@ -807,143 +929,201 @@ async function formModalAppointment() {
 
 // Metodo que hace fetch al endpoint de obtener un usuario por id
 async function getUserById() {
-    let settings =  {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${localStorage.token}`,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        }
-    };
-    const request = await fetch(`${API_URL}/people/${jsonToken.id}`, settings);
-    if (request.ok && request.status === 200) {
-        return await request.json();
+  let settings = {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${localStorage.token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  };
+  const request = await fetch(`${API_URL}/people/${jsonToken.id}`, settings);
+  if (request.ok && request.status === 200) {
+    return await request.json();
 
-    } else if (request.status === 400) {
-        const respuesta = await request.json();
-        for (response of respuesta) {
-            toastr.error(`${response}`);
-        }
-        console.log(respuesta)
+  } else if (request.status === 400) {
+    const respuesta = await request.json();
+    for (response of respuesta) {
+      toastr.error(`${response}`);
     }
-    else if (request.status === 404) {
-        const respuesta = await request.json();
-        toastr.error(`${respuesta.error}`);
-        console.log(respuesta.error)
-        window.location.href = "pages-error-404.html";
-    }
+    console.log(respuesta)
+  }
+  else if (request.status === 404) {
+    const respuesta = await request.json();
+    toastr.error(`${respuesta.error}`);
+    console.log(respuesta.error)
+    window.location.href = "pages-error-404.html";
+  }
 }
 
 // Metodo que hace fetch al endpoint de obtener todos los pacientes que tienen cita con el doctor
 async function getAllAppointmentByRole() {
-    let settings =  {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${localStorage.token}`,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        }
-    };
-    const request = await fetch(`${API_URL}/appointment/doctor/${jsonToken.id}`, settings);
-    if (request.ok && request.status === 200) {
-        return await request.json();
+  let settings = {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${localStorage.token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  };
+  const request = await fetch(`${API_URL}/appointment/doctor/${jsonToken.id}`, settings);
+  if (request.ok && request.status === 200) {
+    return await request.json();
 
-    } else if (request.status === 400) {
-        const respuesta = await request.json();
-        for (response of respuesta) {
-            toastr.error(`${response}`);
-        }
-        console.log(respuesta)
+  } else if (request.status === 400) {
+    const respuesta = await request.json();
+    for (response of respuesta) {
+      toastr.error(`${response}`);
     }
-    else if (request.status === 404) {
-        const respuesta = await request.json();
-        toastr.error(`${respuesta.error}`);
-        console.log(respuesta.error);
+    console.log(respuesta)
+  }
+  else if (request.status === 404) {
+    const respuesta = await request.json();
+    toastr.error(`${respuesta.error}`);
+    console.log(respuesta.error);
+  }
+}
+
+// Metodo que hace fetch al endpoint de obtener todos los pacientes que tienen cita con el doctor
+async function getAllAppointmentByRoleAndStatus() {
+  let settings = {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${localStorage.token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
     }
+  };
+  const request = await fetch(`${API_URL}/appointment/doctor/${jsonToken.id}`, settings);
+  if (request.ok && request.status === 200) {
+    return await request.json();
+
+  } else if (request.status === 400) {
+    const respuesta = await request.json();
+    for (response of respuesta) {
+      toastr.error(`${response}`);
+    }
+    console.log(respuesta)
+  }
+  else if (request.status === 404) {
+    const respuesta = await request.json();
+    toastr.error(`${respuesta.error}`);
+    console.log(respuesta.error);
+  }
 }
 
 // Metodo para obtener todos los doctores
 async function getAllDoctorsByRole() {
-  let settings =  {
+  let settings = {
     method: 'GET',
     headers: {
-        'Authorization': `Bearer ${localStorage.token}`,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+      'Authorization': `Bearer ${localStorage.token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
     }
   };
   const request = await fetch(`${API_URL}/people/doctor/DOCTOR`, settings);
   if (request.ok && request.status === 200) {
-      return await request.json();
+    return await request.json();
 
   } else if (request.status === 400) {
-      const respuesta = await request.json();
-      for (response of respuesta) {
-          toastr.error(`${response}`);
-      }
-      console.log(respuesta)
+    const respuesta = await request.json();
+    for (response of respuesta) {
+      toastr.error(`${response}`);
+    }
+    console.log(respuesta)
   }
   else if (request.status === 404) {
-      const respuesta = await request.json();
-      toastr.error(`${respuesta.error}`);
-      console.log(respuesta.error);
+    const respuesta = await request.json();
+    toastr.error(`${respuesta.error}`);
+    console.log(respuesta.error);
   }
 }
 
 // Metodo para obtener todos los pacientes
 async function getAllPatientsByRole() {
-  let settings =  {
+  let settings = {
     method: 'GET',
     headers: {
-        'Authorization': `Bearer ${localStorage.token}`,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+      'Authorization': `Bearer ${localStorage.token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
     }
   };
   const request = await fetch(`${API_URL}/people/doctor/PATIENT`, settings);
   if (request.ok && request.status === 200) {
-      return await request.json();
+    return await request.json();
 
   } else if (request.status === 400) {
-      const respuesta = await request.json();
-      for (response of respuesta) {
-          toastr.error(`${response}`);
-      }
-      console.log(respuesta)
+    const respuesta = await request.json();
+    for (response of respuesta) {
+      toastr.error(`${response}`);
+    }
+    console.log(respuesta)
   }
   else if (request.status === 404) {
-      const respuesta = await request.json();
-      toastr.error(`${respuesta.error}`);
-      console.log(respuesta.error);
+    const respuesta = await request.json();
+    toastr.error(`${respuesta.error}`);
+    console.log(respuesta.error);
   }
 }
 
 // Metodo para obtener todas las EPS
 async function getAllEps() {
-  let settings =  {
+  let settings = {
     method: 'GET',
     headers: {
-        'Authorization': `Bearer ${localStorage.token}`,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+      'Authorization': `Bearer ${localStorage.token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
     }
   };
   const request = await fetch(`${API_URL}/eps/`, settings);
   if (request.ok && request.status === 200) {
-      return await request.json();
+    return await request.json();
 
   } else if (request.status === 400) {
-      const respuesta = await request.json();
-      for (response of respuesta) {
-          toastr.error(`${response}`);
-      }
-      console.log(respuesta)
+    const respuesta = await request.json();
+    for (response of respuesta) {
+      toastr.error(`${response}`);
+    }
+    console.log(respuesta)
   }
   else if (request.status === 404) {
-      const respuesta = await request.json();
-      toastr.error(`${respuesta.error}`);
-      console.log(respuesta.error);
+    const respuesta = await request.json();
+    toastr.error(`${respuesta.error}`);
+    console.log(respuesta.error);
   }
+}
+
+// Metodo para obtener una cita por ID
+async function getAppointmentById(id) {
+
+  let settings = {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${localStorage.token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  };
+  const request = await fetch(`${API_URL}/appointment/${id}`, settings);
+  if (request.ok && request.status === 200) {
+    return await request.json();
+
+  } else if (request.status === 400) {
+    const respuesta = await request.json();
+    for (response of respuesta) {
+      toastr.error(`${response}`);
+    }
+    console.log(respuesta)
+  }
+  else if (request.status === 404) {
+    const respuesta = await request.json();
+    toastr.error(`${respuesta.error}`);
+    console.log(respuesta.error);
+  }
+
 }
 
 // Metodo para crear una persona
@@ -960,24 +1140,24 @@ async function createPerson() {
 
   var myForm = document.getElementById("formCreatePerson");
   var formData = new FormData(myForm);
-  formData.forEach( data => {
+  formData.forEach(data => {
     if (data === "") {
       myForm.classList.add("was-validated");
     }
   });
   var jsonData = {};
   for (var [k, v] of formData) {//convertimos los datos a json
-      jsonData[k] = v;
+    jsonData[k] = v;
   }
   jsonData.idRole = idRole;
-  let settings =  {
-      method: 'POST',
-      headers: {
-          'Authorization': `Bearer ${localStorage.token}`,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(jsonData)
+  let settings = {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${localStorage.token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(jsonData)
   };
   const request = await fetch(`${API_URL}/people/`, settings);
   if (request.ok && request.status === 201) {
@@ -986,45 +1166,46 @@ async function createPerson() {
     return await request.json();
 
   } else if (request.status === 400) {
-      const respuesta = await request.json();
-      for (response of respuesta) {
-          toastr.error(`${response}`);
-      }
-      console.log(respuesta)
+    const respuesta = await request.json();
+    for (response of respuesta) {
+      toastr.error(`${response}`);
+    }
+    console.log(respuesta)
   }
   else if (request.status === 401) {
-      const respuesta = await request.json();
-      toastr.error(`${respuesta.error}`);
-      console.log(respuesta.error);
+    const respuesta = await request.json();
+    toastr.error(`${respuesta.error}`);
+    console.log(respuesta.error);
   }
 }
 
 // Metodo para crear una una cita
 async function createAppointment() {
-  
+
   const user = await getUserById(jsonToken.id);
 
   var myForm = document.getElementById("formCreateAppointment");
   var formData = new FormData(myForm);
-  formData.forEach( data => {
+  formData.forEach(data => {
     if (data === "") {
       myForm.classList.add("was-validated");
     }
   });
   var jsonData = {};
   for (var [k, v] of formData) {//convertimos los datos a json
-      jsonData[k] = v;
+    jsonData[k] = v;
   }
   jsonData.attentionDate = currentDate();
   jsonData.doctorDocument = user.document;
-  let settings =  {
-      method: 'POST',
-      headers: {
-          'Authorization': `Bearer ${localStorage.token}`,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(jsonData)
+  jsonData.status = APPOINTMENT.pending;
+  let settings = {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${localStorage.token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(jsonData)
   };
   const request = await fetch(`${API_URL}/appointment/`, settings);
   if (request.ok && request.status === 201) {
@@ -1032,44 +1213,137 @@ async function createAppointment() {
     loadAgendaPage();
     return await request.json();
 
+  } else if (request.status === 409) {
+    const respuesta = await request.json();
+    toastr.error(`${respuesta.error}`);
+    console.log(respuesta.error);
   } else if (request.status === 400) {
-      const respuesta = await request.json();
-      for (response of respuesta) {
-          toastr.error(`${response}`);
-      }
-      console.log(respuesta)
+    const respuesta = await request.json();
+    for (response of respuesta) {
+      toastr.error(`${response}`);
+    }
+    console.log(respuesta)
+  } else if (request.status === 401) {
+    const respuesta = await request.json();
+    toastr.error(`${respuesta.error}`);
+    console.log(respuesta.error);
+  } 
+}
+
+// Metodo para actualizar el estado de la cita
+async function updateStatus(id) {
+
+  const appointment = await getAppointmentById(id);
+  let jsonBody = {}
+
+  if (appointment.status === APPOINTMENT.pending) {
+    jsonBody.status = APPOINTMENT.attending;
+  } else if (appointment.status === APPOINTMENT.attending) {
+    jsonBody.status = APPOINTMENT.attended;
+  } else if (appointment.status === APPOINTMENT.attended) {
+    return toastr.warning("No puede cambiar este estado")
+  }
+
+  let settings = {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${localStorage.token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(jsonBody)
+  };
+  const request = await fetch(`${API_URL}/appointment/update/status/${id}`, settings);
+  if (request.ok && request.status === 201) {
+    toastr.success('Registro Guardado');
+    loadAgendaPage();
+    return await request.json();
+
+  } else if (request.status === 400) {
+    const respuesta = await request.json();
+    for (response of respuesta) {
+      toastr.error(`${response}`);
+    }
+    console.log(respuesta)
   }
   else if (request.status === 401) {
-      const respuesta = await request.json();
-      toastr.error(`${respuesta.error}`);
-      console.log(respuesta.error);
+    const respuesta = await request.json();
+    return toastr.error(`${respuesta.error}`);
   }
 }
 
-// Metodo para mostrar la modal
+//Metodo para crear una EPS
+async function createEps() {
+  var myForm = document.getElementById("formCreateEps");
+  var formData = new FormData(myForm);
+  formData.forEach(data => {
+    if (data.innerHTML === "") {
+      myForm.classList.add("was-validated");
+    }
+  });
+  var jsonData = {};
+  for (var [k, v] of formData) {//convertimos los datos a json
+    jsonData[k] = v;
+  }
+  let settings = {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${localStorage.token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(jsonData)
+  };
+  const request = await fetch(`${API_URL}/eps/`, settings);
+  if (request.ok && request.status === 201) {
+    toastr.success('Registro Guardado');
+    loadEpsPage();
+    return await request.json();
+
+  } else if (request.status === 400) {
+    const respuesta = await request.json();
+    for (response of respuesta) {
+      toastr.error(`${response}`);
+    }
+    console.log(respuesta)
+  }
+  else if (request.status === 401) {
+    const respuesta = await request.json();
+    toastr.error(`${respuesta.error}`);
+    console.log(respuesta.error);
+  }
+}
+
+// Metodo para mostrar la modal de citas
 async function showModal() {
   $('#my_modal').modal('show');
   document.querySelector('#modal_content').innerHTML = await formModalAppointment();
 }
 
+// Metodo para mostrar la modal de eps
+async function showModalEps() {
+  $('#my_modal_eps').modal('show');
+  document.querySelector('#modal_content_eps').innerHTML = await formModalEps();
+}
+
 function restoreValidate() {
-    document.getElementById("formCreatePerson").classList.remove("was-validated");
-    
+  document.getElementById("formCreatePerson").classList.remove("was-validated");
+
 }
 
 function salir() {
-    localStorage.clear();
-    location.href = "../index.html";
+  localStorage.clear();
+  location.href = "../index.html";
 }
 
 function validateToken() {
-    if (localStorage.token == undefined) {
-      salir();
-    }
-    if (jsonToken.exp <= Math.floor(Date.now() / 1000)) {
-      toastr.warning("Sesión expirada");
-      setTimeout(salir(), 1000);
-    }
+  if (localStorage.token == undefined) {
+    salir();
+  }
+  if (jsonToken.exp <= Math.floor(Date.now() / 1000)) {
+    toastr.warning("Sesión expirada");
+    setTimeout(salir(), 1000);
+  }
 }
 
 function deleteElement(element) {
@@ -1081,23 +1355,23 @@ function deleteElement(element) {
 }
 
 function decodeJwt(token) {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    return JSON.parse(jsonPayload);
+  const base64Url = token.split('.')[1];
+  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
+    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join(''));
+  return JSON.parse(jsonPayload);
 }
 
 function currentDate() {
-    // Obtener la fecha y hora actual
-    const currentDate = new Date();
-    // Obtener los componentes de la fecha y hora actual
-    const year = currentDate.getFullYear();
-    const month = (currentDate.getMonth() + 1).toString().padStart(2, '0'); // El mes es base 0, por lo que se suma 1
-    const day = currentDate.getDate().toString().padStart(2, '0');
-    const hours = currentDate.getHours().toString().padStart(2, '0');
-    const minutes = currentDate.getMinutes().toString().padStart(2, '0');
-    // Crear una cadena de fecha y hora en el formato adecuado (YYYY-MM-DDTHH:MM)
-    return formattedDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+  // Obtener la fecha y hora actual
+  const currentDate = new Date();
+  // Obtener los componentes de la fecha y hora actual
+  const year = currentDate.getFullYear();
+  const month = (currentDate.getMonth() + 1).toString().padStart(2, '0'); // El mes es base 0, por lo que se suma 1
+  const day = currentDate.getDate().toString().padStart(2, '0');
+  const hours = currentDate.getHours().toString().padStart(2, '0');
+  const minutes = currentDate.getMinutes().toString().padStart(2, '0');
+  // Crear una cadena de fecha y hora en el formato adecuado (YYYY-MM-DDTHH:MM)
+  return formattedDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
 }
