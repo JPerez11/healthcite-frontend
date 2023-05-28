@@ -43,8 +43,10 @@ async function loadPage() {
 
   if (jsonToken.role === "PATIENT") {
     deleteElement(li_sidebar_person);
-    deleteElement(li_sidebar_agenda);
     deleteElement(li_sidebar_eps);
+    if (title.innerHTML === "Agenda - Healthcite") {
+      loadPatientAgendaPage();
+    }
     return
   } else if (jsonToken.role === "DOCTOR") {
     deleteElement(li_sidebar_eps);
@@ -366,6 +368,12 @@ async function loadAgendaPage() {
   agenda_section.innerHTML = await appointmentSection();
 }
 
+// Metodo para cargar el perfil del usuario logueado
+async function loadPatientAgendaPage() {
+  const agenda_section = document.getElementById("agenda_section");
+  agenda_section.innerHTML = await appointmentPatientSection();
+}
+
 async function loadEpsPage() {
   const epsSction = document.getElementById("eps_section");
   epsSction.innerHTML = await epsSection();
@@ -596,6 +604,85 @@ async function appointmentSection() {
                                           <i class="bx bxs-calendar-check text-success fs-4" title="Change status" style="cursor: pointer" onclick="updateStatus(${data.id})"></i>
                                         </div>
                                       </td>
+                                  </tr>`;
+    }
+  }
+  appointments += `
+                </tbody>
+            </table>
+            <!-- End Table with stripped rows -->
+
+        </div>
+        </div>
+
+    </div>
+    </div>`;
+
+  return appointments;
+}
+
+// Metodo para cargar la seccion de pacientes
+async function appointmentPatientSection() {
+
+  const response = await getAllAppointmentByRole();
+  let count = 0;
+  // Formatear las fechas de nacimiento en la zona horaria de Bogotá
+  const options = {
+    timeZone: 'America/Bogota',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  };
+
+  const formatter = new Intl.DateTimeFormat('es-CO', options);
+  let appointments = `
+    
+    <div class="row">
+        <div class="col-lg-12">
+
+          <div class="card">
+            <div class="card-header">
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="button" class="btn btn-primary" onclick="showModal()"><i class="bx bxs-calendar-plus"></i> Crear cita</button>
+                </div>
+            </div>
+            <div class="card-body">
+              <h5 class="card-title">Lista de citas</h5>
+
+              <!-- Table with stripped rows -->
+              <table class="table datatable">
+                <thead>
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Doctor name</th>
+                    <th scope="col">Document</th>
+                    <th scope="col">Phone</th>
+                    <th scope="col">EPS</th>
+                    <th scope="col">Citation Date</th>
+                    <th scope="col">Status</th>
+                  </tr>
+                </thead>
+                <tbody>`;
+
+  if (response !== undefined) {
+
+    for (const data of response) {
+      let citationDate = new Date(data.citationDate);
+      let dateFormat = formatter.format(citationDate);
+      count++;
+      appointments += `
+                          
+                                  <tr>
+                                      <th scope="row">${count}</th>
+                                      <td>${data.doctorName.charAt(0).toUpperCase() + data.doctorName.slice(1).toLowerCase()}</td>
+                                      <td>${data.doctorDocument}</td>
+                                      <td>${data.doctorPhone}</td>
+                                      <td>${data.eps}</td>
+                                      <td>${dateFormat}</td>
+                                      <td>${data.status}</td>
                                   </tr>`;
     }
   }
@@ -851,7 +938,6 @@ async function formModalEps() {
 // Metodo para cargar el formulario en la modal
 async function formModalAppointment() {
 
-  const patientResponse = await getAllPatientsByRole();
   const epsResponse = await getAllEps();
 
   if (epsResponse === undefined || epsResponse === null) {
@@ -872,6 +958,39 @@ async function formModalAppointment() {
             <input type="text" class="form-control" name="description" id="description" required>
           </div>
         </div>
+        `;
+  let response;
+  if (jsonToken.role === "PATIENT") {
+    response = await getAllDoctorsByRole();
+    form += `
+        <div class="row mb-3">
+          <label for="doctorDocument" class="col-sm-2 col-form-label">Doctor</label>
+          <div class="col-sm-10">
+            <input type="text" class="form-control" name="doctorDocument" list="doctorList" id="doctorDocument" required>
+          </div>
+        </div>
+        <datalist id="doctorList">
+        `;
+  if (response !== undefined) {
+    for (const doctor of response) {
+      form += `
+            <option value="${doctor.document}">${doctor.firstName.charAt(0).toUpperCase() + doctor.firstName.slice(1).toLowerCase()} ${doctor.lastName.charAt(0).toUpperCase() + doctor.lastName.slice(1).toLowerCase()}</option>
+            `;
+    }
+  }
+  form += `
+      </datalist>
+      <div class="row mb-3">
+          <label for="epsName" class="col-sm-2 col-form-label">EPS</label>
+          <div class="col-sm-10">
+            <input type="epsName" class="form-control" name="epsName" list="epsList" id="epsName" required>
+          </div>
+        </div>
+        <datalist id="epsList">
+        `;
+  } else if (jsonToken.role === "DOCTOR") {
+    response = await getAllPatientsByRole();
+    form += `
         <div class="row mb-3">
           <label for="patientDocument" class="col-sm-2 col-form-label">Patient</label>
           <div class="col-sm-10">
@@ -880,8 +999,8 @@ async function formModalAppointment() {
         </div>
         <datalist id="patientList">
         `;
-  if (patientResponse !== undefined) {
-    for (const patient of patientResponse) {
+  if (response !== undefined) {
+    for (const patient of response) {
       form += `
             <option value="${patient.document}">${patient.firstName.charAt(0).toUpperCase() + patient.firstName.slice(1).toLowerCase()} ${patient.lastName.charAt(0).toUpperCase() + patient.lastName.slice(1).toLowerCase()}</option>
             `;
@@ -897,6 +1016,9 @@ async function formModalAppointment() {
         </div>
         <datalist id="epsList">
         `;
+  }
+
+    
   if (epsResponse !== undefined) {
     for (const eps of epsResponse) {
       form += `
@@ -958,6 +1080,12 @@ async function getUserById() {
 
 // Metodo que hace fetch al endpoint de obtener todos los pacientes que tienen cita con el doctor
 async function getAllAppointmentByRole() {
+  let route = "";
+  if (jsonToken.role === "PATIENT") {
+    route = `patient/${jsonToken.id}`;
+  } else if (jsonToken.role === "DOCTOR") {
+    route = `doctor/${jsonToken.id}`;
+  }
   let settings = {
     method: 'GET',
     headers: {
@@ -966,7 +1094,7 @@ async function getAllAppointmentByRole() {
       'Content-Type': 'application/json'
     }
   };
-  const request = await fetch(`${API_URL}/appointment/doctor/${jsonToken.id}`, settings);
+  const request = await fetch(`${API_URL}/appointment/${route}`, settings);
   if (request.ok && request.status === 200) {
     return await request.json();
 
@@ -1022,7 +1150,7 @@ async function getAllDoctorsByRole() {
       'Content-Type': 'application/json'
     }
   };
-  const request = await fetch(`${API_URL}/people/doctor/DOCTOR`, settings);
+  const request = await fetch(`${API_URL}/people/type/DOCTOR`, settings);
   if (request.ok && request.status === 200) {
     return await request.json();
 
@@ -1050,7 +1178,7 @@ async function getAllPatientsByRole() {
       'Content-Type': 'application/json'
     }
   };
-  const request = await fetch(`${API_URL}/people/doctor/PATIENT`, settings);
+  const request = await fetch(`${API_URL}/people/type/PATIENT`, settings);
   if (request.ok && request.status === 200) {
     return await request.json();
 
@@ -1182,8 +1310,6 @@ async function createPerson() {
 // Metodo para crear una una cita
 async function createAppointment() {
 
-  const user = await getUserById(jsonToken.id);
-
   var myForm = document.getElementById("formCreateAppointment");
   var formData = new FormData(myForm);
   formData.forEach(data => {
@@ -1195,8 +1321,14 @@ async function createAppointment() {
   for (var [k, v] of formData) {//convertimos los datos a json
     jsonData[k] = v;
   }
+  const user = await getUserById(jsonToken.id);
+  if (jsonToken.role === "PATIENT") {
+    jsonData.patientDocument = user.document;
+  } else if (jsonToken.role === "DOCTOR") {
+    jsonData.doctorDocument = user.document;
+  }
   jsonData.attentionDate = currentDate();
-  jsonData.doctorDocument = user.document;
+  
   jsonData.status = APPOINTMENT.pending;
   let settings = {
     method: 'POST',
@@ -1210,7 +1342,12 @@ async function createAppointment() {
   const request = await fetch(`${API_URL}/appointment/`, settings);
   if (request.ok && request.status === 201) {
     toastr.success('Registro Guardado');
-    loadAgendaPage();
+    if (jsonToken.role === "PATIENT") {
+      loadPatientAgendaPage();
+    } else if (jsonToken.role === "DOCTOR") {
+      loadAgendaPage();
+    }
+    
     return await request.json();
 
   } else if (request.status === 409) {
@@ -1227,7 +1364,7 @@ async function createAppointment() {
     const respuesta = await request.json();
     toastr.error(`${respuesta.error}`);
     console.log(respuesta.error);
-  } 
+  }
 }
 
 // Metodo para actualizar el estado de la cita
