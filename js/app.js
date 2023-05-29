@@ -38,13 +38,20 @@ async function loadPage() {
 
   username_logged.innerHTML = await profileUser();
   if (title.innerHTML === "Profile - Healthcite") {
+    document.querySelector("#li_sidebar_dashboard a").classList.add('collapsed');
     loadProfilePage();
+  } else if (title.innerHTML === "Callcenter - Healthcite") {
+    document.querySelector("#li_sidebar_dashboard a").classList.add('collapsed');
+    document.querySelector("#li_sidebar_callcenter a").classList.remove('collapsed');
   }
 
   if (jsonToken.role === "PATIENT") {
     deleteElement(li_sidebar_person);
     deleteElement(li_sidebar_eps);
     if (title.innerHTML === "Agenda - Healthcite") {
+      document.querySelector("#li_sidebar_dashboard a").classList.add('collapsed');
+      document.querySelector("#li_sidebar_agenda a").classList.remove('collapsed');
+      loadPatientAgendaPage();
       loadPatientAgendaPage();
     }
     return
@@ -52,8 +59,12 @@ async function loadPage() {
     deleteElement(li_sidebar_eps);
     span_sidebar_person.textContent = DOCTOR.patient;
     if (title.innerHTML === "Patient - Healthcite") {
+      document.querySelector("#li_sidebar_dashboard a").classList.add('collapsed');
+      document.querySelector("#li_sidebar_person a").classList.remove('collapsed');
       loadPersonPage(2);
     } else if (title.innerHTML === "Agenda - Healthcite") {
+      document.querySelector("#li_sidebar_dashboard a").classList.add('collapsed');
+      document.querySelector("#li_sidebar_agenda a").classList.remove('collapsed');
       loadAgendaPage();
     }
 
@@ -63,12 +74,16 @@ async function loadPage() {
     span_sidebar_person.innerHTML = ADMIN.doctor;
 
     if (title.innerHTML === "Patient - Healthcite") {
+      document.querySelector("#li_sidebar_dashboard a").classList.add('collapsed');
+      document.querySelector("#li_sidebar_person a").classList.remove('collapsed');
       pagetitle.textContent = ADMIN.doctor;
       modal_title.textContent = "Crear doctor";
       nav_li_page.textContent = ADMIN.doctor;
       title.innerHTML = "Doctors - Healthcite";
       loadPersonPage(1);
     } else if (title.innerHTML === "EPS - Healthcite") {
+      document.querySelector("#li_sidebar_dashboard a").classList.add('collapsed');
+      document.querySelector("#li_sidebar_eps a").classList.remove('collapsed');
       loadEpsPage();
     }
 
@@ -98,7 +113,7 @@ async function loadSidebarPage() {
   sidebar.innerHTML = `
     <ul class="sidebar-nav" id="sidebar-nav">
 
-      <li class="nav-item">
+      <li class="nav-item" id="li_sidebar_dashboard">
         <a class="nav-link " href="dashboard.html">
           <i class="bi bi-grid"></i>
           <span>Dashboard</span>

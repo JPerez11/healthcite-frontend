@@ -1,65 +1,97 @@
 const APP_ID = "5e2ebfceccb24a7d96c012965add827a";
+// Token expires on May 30, 2023 2:11 AM UTC
 const TOKEN = "007eJxTYHj/oN5psXLL4iPa3g/dJ2+W9FJI1+f6tWVRS5/VpONbpa0UGExTjVKT0pJTk5OTjEwSzVMszZINDI0szUwTU1IsjMwTv2QXpzQEMjI4qqxiYWSAQBCfhSE3MTOPgQEAZqAfoQ==";
 const CHANNEL = "main";
 
-const client = AgoraRTC.createClient({mode:'rtc', codec:'vp8'})
+const cameraSelect = document.getElementById('cameraSelect');
 
-let localTracks = []
-let remoteUsers = {}
+const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
 
-let joinAndDisplayLocalStream = async () => {
+let localTracks = [];
+let remoteUsers = {};
 
-    client.on('user-published', handleUserJoined)
-    
-    client.on('user-left', handleUserLeft)
-    
-    let UID = await client.join(APP_ID, CHANNEL, TOKEN, null)
+const joinStream = async () => {
+  const selectedCamera = cameraSelect.value;
 
-    localTracks = await AgoraRTC.createMicrophoneAndCameraTracks() 
+  client.on('user-published', handleUserJoined);
+  client.on('user-left', handleUserLeft);
 
-    let player = `<div class="video-container" id="user-container-${UID}">
-                        <div class="video-player" id="user-${UID}"></div>
-                  </div>`
-    document.getElementById('video-streams').insertAdjacentHTML('beforeend', player)
+  const UID = await client.join(APP_ID, CHANNEL, TOKEN, null);
 
-    localTracks[1].play(`user-${UID}`)
-    
-    await client.publish([localTracks[0], localTracks[1]])
-}
+  const cameraTrack = selectedCamera
+    ? await AgoraRTC.createCameraVideoTrack({ cameraId: selectedCamera })
+    : await AgoraRTC.createCameraVideoTrack();
 
-let joinStream = async () => {
-    await joinAndDisplayLocalStream()
-    document.getElementById('join-btn').style.display = 'none'
-    document.getElementById('stream-controls').style.display = 'flex'
-}
+  const microphoneTrack = await AgoraRTC.createMicrophoneAudioTrack();
 
-let handleUserJoined = async (user, mediaType) => {
-    remoteUsers[user.uid] = user 
-    await client.subscribe(user, mediaType)
+  localTracks = [microphoneTrack, cameraTrack];
 
-    if (mediaType === 'video'){
-        let player = document.getElementById(`user-container-${user.uid}`)
-        if (player != null){
-            player.remove()
-        }
+  if (cameraTrack) {
+    const player = `<div class="video-container" id="user-container-${UID}">
+      <div class="video-player" id="user-${UID}"></div>
+    </div>`;
+    document.getElementById('video-streams').insertAdjacentHTML('beforeend', player);
 
-        player = `<div class="video-container" id="user-container-${user.uid}">
-                        <div class="video-player" id="user-${user.uid}"></div> 
-                 </div>`
-        document.getElementById('video-streams').insertAdjacentHTML('beforeend', player)
+    cameraTrack.play(`user-${UID}`);
+  }
 
-        user.videoTrack.play(`user-${user.uid}`)
+  await client.publish(localTracks);
+
+  document.getElementById('join-btn').style.display = 'none';
+  document.getElementById('stream-controls').style.display = 'flex';
+};
+
+const handleUserJoined = async (user, mediaType) => {
+  remoteUsers[user.uid] = user;
+  await client.subscribe(user, mediaType);
+
+  if (mediaType === 'video') {
+    let player = document.getElementById(`user-container-${user.uid}`);
+    if (player != null) {
+      player.remove();
     }
 
-    if (mediaType === 'audio'){
-        user.audioTrack.play()
-    }
-}
+    player = `<div class="video-container" id="user-container-${user.uid}">
+                  <div class="video-player" id="user-${user.uid}"></div> 
+           </div>`;
+    document.getElementById('video-streams').insertAdjacentHTML('beforeend', player);
 
-let handleUserLeft = async (user) => {
-    delete remoteUsers[user.uid]
-    document.getElementById(`user-container-${user.uid}`).remove()
-}
+    user.videoTrack.play(`user-${user.uid}`);
+  }
+
+  if (mediaType === 'audio') {
+    user.audioTrack.play();
+  }
+};
+
+const handleUserLeft = async (user) => {
+  delete remoteUsers[user.uid];
+  document.getElementById(`user-container-${user.uid}`).remove();
+};
+
+// Actualizar opciones del selector de cámara y capturar evento de cambio
+const updateCameraOptions = async () => {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+
+    cameraSelect.innerHTML = '<option value="">Seleccionar cámara</option>'; // Limpiar opciones existentes
+
+    devices.forEach((device) => {
+      if (device.kind === 'videoinput') {
+        const option = document.createElement('option');
+        option.value = device.deviceId;
+        option.text = device.label || `Cámara ${cameraSelect.length + 1}`;
+        cameraSelect.appendChild(option);
+      }
+    });
+  } catch (error) {
+    console.error('Error al enumerar los dispositivos:', error);
+  }
+};
+
+
+// Llamar a la función para inicializar las opciones del selector de cámara
+updateCameraOptions();
 
 let leaveAndRemoveLocalStream = async () => {
     for(let i = 0; localTracks.length > i; i++){
